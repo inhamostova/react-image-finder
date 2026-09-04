@@ -1,7 +1,12 @@
 import { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Button, Input, Label, SearchForm, Header } from './SearchBar.styled';
 
 export class SearchBar extends Component {
+  static propTypes = {
+    onSubmit: PropTypes.func.isRequired,
+  };
+
   state = {
     value: '',
   };
@@ -12,6 +17,10 @@ export class SearchBar extends Component {
 
   handleSubmit = evt => {
     evt.preventDefault();
+    if (!this.state.value.trim()) {
+      alert('Please enter your query');
+      return;
+    }
     this.props.onSubmit(this.state.value);
     this.setState({ value: '' });
   };

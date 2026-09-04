@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import icon from '../../images/search-svgrepo-com.svg';
 
 export const Header = styled.header`
   top: 0;
@@ -36,7 +37,7 @@ export const Button = styled.button`
   width: 48px;
   height: 48px;
   border: 0;
-  background-image: url('https://www.pngfind.com/pngs/m/109-1092764_search-icon-icon-find-svg-hd-png-download.png');
+  background-image: url(${icon});
   background-size: 40%;
   background-repeat: no-repeat;
   background-position: center;

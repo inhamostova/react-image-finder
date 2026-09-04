@@ -1,10 +1,10 @@
 import { Component } from 'react';
-import { RotatingLines } from 'react-loader-spinner';
 import { fetchImages } from 'services/serviceAPI';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { ImageGallery } from '../ImageGallery/ImageGallery';
 import { Container } from './App.styled';
 import { Button } from 'components/Button/Button';
+import { Loader } from 'components/Loader/Loader';
 
 export class App extends Component {
   state = {
@@ -14,14 +14,20 @@ export class App extends Component {
     showBtn: false,
     isLoading: false,
     error: null,
+    totalHits: 0,
   };
 
   async componentDidUpdate(_, prevState) {
     if (prevState.searchQuery !== this.state.searchQuery) {
       try {
-        this.setState({ images: [], error: null, isLoading: true });
+        this.setState({
+          images: [],
+          error: null,
+          isLoading: true,
+          showBtn: false,
+        });
 
-        const { hits } = await fetchImages(
+        const { hits, totalHits } = await fetchImages(
           this.state.searchQuery,
           this.state.page
         );
@@ -30,9 +36,13 @@ export class App extends Component {
           throw new Error('Incorrect name!!!');
         }
 
-        this.setState({ isLoading: false });
+        this.setState({
+          isLoading: false,
+          images: hits,
+          showBtn: !(hits.length >= totalHits),
+          totalHits,
+        });
 
-        this.setState({ images: hits, showBtn: true });
         window.scrollTo({
           top: 0,
           behavior: 'smooth',
@@ -52,12 +62,9 @@ export class App extends Component {
           this.state.page
         );
 
-        if (this.state.page * hits.length >= totalHits) {
-          this.setState({ showBtn: false });
-        }
-
         this.setState(prevState => ({
           images: [...prevState.images, ...hits],
+          showBtn: !(prevState.images.length + hits.length >= totalHits),
         }));
       } catch (error) {
         this.setState({ error: 'Oops, something goes wrong!' });
@@ -84,31 +91,14 @@ export class App extends Component {
     return (
       <Container>
         <SearchBar onSubmit={this.setSearchQuery} />
-        <RotatingLines
-          visible={isLoading && !images.length}
-          color="grey"
-          strokeWidth="5"
-          animationDuration="0.75"
-          ariaLabel="rotating-lines-loading"
-          wrapperStyle={{ margin: '0 auto' }}
-        />
+        <Loader visible={isLoading && !images.length} />
         {error ? (
           <p style={{ color: 'orangered', margin: '0 auto' }}>{error}</p>
         ) : (
           <>
             <ImageGallery items={images} />
-            <RotatingLines
-              visible={isLoading && images.length}
-              color="grey"
-              strokeWidth="5"
-              animationDuration="0.75"
-              ariaLabel="rotating-lines-loading"
-              wrapperStyle={{ margin: '0 auto' }}
-            />
-
-            {showBtn && !!images.length && (
-              <Button onClick={this.increasePage} />
-            )}
+            <Loader visible={isLoading && !!images.length} />
+            {showBtn && images.length && <Button onClick={this.increasePage} />}
           </>
         )}
       </Container>
