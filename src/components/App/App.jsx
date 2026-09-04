@@ -13,39 +13,57 @@ export class App extends Component {
     page: 1,
     showBtn: false,
     isLoading: false,
+    error: null,
   };
 
   async componentDidUpdate(_, prevState) {
     if (prevState.searchQuery !== this.state.searchQuery) {
-      this.setState({ images: [] });
-      this.setState({ isLoading: true });
-      const { hits } = await fetchImages(
-        this.state.searchQuery,
-        this.state.page
-      );
+      try {
+        this.setState({ images: [], error: null, isLoading: true });
 
-      this.setState({ isLoading: false });
+        const { hits } = await fetchImages(
+          this.state.searchQuery,
+          this.state.page
+        );
 
-      this.setState({ images: hits, showBtn: true });
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
+        if (hits.length === 0) {
+          throw new Error('Incorrect name!!!');
+        }
+
+        this.setState({ isLoading: false });
+
+        this.setState({ images: hits, showBtn: true });
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+      } catch (error) {
+        this.setState({ error: error.message });
+      } finally {
+        this.setState({ isLoading: false });
+      }
     }
 
     if (prevState.page !== this.state.page && this.state.page !== 1) {
-      this.setState({ isLoading: true });
-      const { hits, totalHits } = await fetchImages(
-        this.state.searchQuery,
-        this.state.page
-      );
-      this.setState({ isLoading: false });
+      try {
+        this.setState({ isLoading: true, error: null });
+        const { hits, totalHits } = await fetchImages(
+          this.state.searchQuery,
+          this.state.page
+        );
 
-      if (this.state.page * hits.length >= totalHits) {
-        this.setState({ showBtn: false });
+        if (this.state.page * hits.length >= totalHits) {
+          this.setState({ showBtn: false });
+        }
+
+        this.setState(prevState => ({
+          images: [...prevState.images, ...hits],
+        }));
+      } catch (error) {
+        this.setState({ error: 'Oops, something goes wrong!' });
+      } finally {
+        this.setState({ isLoading: false });
       }
-
-      this.setState(prevState => ({ images: [...prevState.images, ...hits] }));
     }
   }
 
@@ -61,7 +79,8 @@ export class App extends Component {
   };
 
   render() {
-    const { images, showBtn, isLoading } = this.state;
+    const { images, showBtn, isLoading, error } = this.state;
+
     return (
       <Container>
         <SearchBar onSubmit={this.setSearchQuery} />
@@ -73,20 +92,25 @@ export class App extends Component {
           ariaLabel="rotating-lines-loading"
           wrapperStyle={{ margin: '0 auto' }}
         />
-        (
-        <>
-          <ImageGallery items={images} />
-          <RotatingLines
-            visible={isLoading && images.length}
-            color="grey"
-            strokeWidth="5"
-            animationDuration="0.75"
-            ariaLabel="rotating-lines-loading"
-            wrapperStyle={{ margin: '0 auto' }}
-          />
-          {showBtn && images.length && <Button onClick={this.increasePage} />}
-        </>
-        )
+        {error ? (
+          <p style={{ color: 'orangered', margin: '0 auto' }}>{error}</p>
+        ) : (
+          <>
+            <ImageGallery items={images} />
+            <RotatingLines
+              visible={isLoading && images.length}
+              color="grey"
+              strokeWidth="5"
+              animationDuration="0.75"
+              ariaLabel="rotating-lines-loading"
+              wrapperStyle={{ margin: '0 auto' }}
+            />
+
+            {showBtn && !!images.length && (
+              <Button onClick={this.increasePage} />
+            )}
+          </>
+        )}
       </Container>
     );
   }
