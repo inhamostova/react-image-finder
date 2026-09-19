@@ -1,44 +1,79 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Overlay, Container } from './Modal.styled';
 
-export class Modal extends Component {
-  static propTypes = {
-    image: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
-    onCloseModal: PropTypes.func.isRequired,
-  };
+export const Modal = ({ onCloseModal, name, image }) => {
+  useEffect(() => {
+    const closeModalByEsc = evt => {
+      if (evt.code === 'Escape') {
+        onCloseModal();
+      }
+    };
+    document.addEventListener('keydown', closeModalByEsc);
 
-  componentDidMount() {
-    document.addEventListener('keydown', this.closeModalByEsc);
-  }
+    return () => {
+      document.removeEventListener('keydown', closeModalByEsc);
+    };
+  }, [onCloseModal]);
 
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.closeModalByEsc);
-  }
-
-  closeModal = evt => {
+  const closeModal = evt => {
     if (evt.currentTarget === evt.target) {
-      this.props.onCloseModal();
+      onCloseModal();
     }
   };
 
-  closeModalByEsc = evt => {
-    if (evt.code === 'Escape') {
-      this.props.onCloseModal();
-    }
-  };
+  return (
+    <Overlay onClick={closeModal}>
+      <Container>
+        <img src={image} alt={name} />
+      </Container>
+    </Overlay>
+  );
+};
 
-  render() {
-    const { image, name } = this.props;
-    const { closeModal } = this;
+Modal.propTypes = {
+  image: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  onCloseModal: PropTypes.func.isRequired,
+};
 
-    return (
-      <Overlay onClick={closeModal}>
-        <Container>
-          <img src={image} alt={name} />
-        </Container>
-      </Overlay>
-    );
-  }
-}
+// export class OldModal extends Component {
+//   static propTypes = {
+//     image: PropTypes.string.isRequired,
+//     name: PropTypes.string.isRequired,
+//     onCloseModal: PropTypes.func.isRequired,
+//   };
+
+//   componentDidMount() {
+//     document.addEventListener('keydown', this.closeModalByEsc);
+//   }
+
+//   componentWillUnmount() {
+//     document.removeEventListener('keydown', this.closeModalByEsc);
+//   }
+
+//   closeModal = evt => {
+//     if (evt.currentTarget === evt.target) {
+//       this.props.onCloseModal();
+//     }
+//   };
+
+//   closeModalByEsc = evt => {
+//     if (evt.code === 'Escape') {
+//       this.props.onCloseModal();
+//     }
+//   };
+
+//   render() {
+//     const { image, name } = this.props;
+//     const { closeModal } = this;
+
+//     return (
+//       <Overlay onClick={closeModal}>
+//         <Container>
+//           <img src={image} alt={name} />
+//         </Container>
+//       </Overlay>
+//     );
+//   }
+// }
